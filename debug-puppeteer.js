@@ -1,13 +1,30 @@
+const chromium = require('@sparticuz/chromium');
+const puppeteerCore = require('puppeteer-core');
 const puppeteer = require('puppeteer');
 
 (async () => {
     console.log("Starting debug script...");
     try {
         console.log("Launching browser...");
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: ["--no-sandbox", "--disable-setuid-sandbox"],
-        });
+        let browser;
+
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+            // Configuration Vercel / Production
+            console.log("Running in Production/Vercel environment");
+            browser = await puppeteerCore.launch({
+                args: chromium.args,
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                headless: chromium.headless,
+            });
+        } else {
+            // Configuration Local
+            console.log("Running in Local environment");
+            browser = await puppeteer.launch({
+                headless: true,
+                args: ["--no-sandbox", "--disable-setuid-sandbox"],
+            });
+        }
         console.log("Browser launched.");
 
         const page = await browser.newPage();
