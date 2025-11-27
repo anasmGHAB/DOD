@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import chromium from "@sparticuz/chromium";
+import puppeteerCore from "puppeteer-core";
 import puppeteer from "puppeteer";
 
 interface GA4Hit {
@@ -15,14 +17,26 @@ export async function POST(request: Request) {
         const targetUrl = body.url || "https://www.nespresso.com/fr/fr";
 
         console.log("Launching browser for GA4 tracking...");
-        browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                "--no-sandbox",
-                "--disable-setuid-sandbox",
-                "--disable-blink-features=AutomationControlled",
-            ],
-        });
+
+        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+            browser = await puppeteerCore.launch({
+                args: chromium.args,
+                // @ts-ignore
+                defaultViewport: chromium.defaultViewport,
+                executablePath: await chromium.executablePath(),
+                // @ts-ignore
+                headless: chromium.headless,
+            });
+        } else {
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    "--no-sandbox",
+                    "--disable-setuid-sandbox",
+                    "--disable-blink-features=AutomationControlled",
+                ],
+            });
+        }
         const page = await browser.newPage();
 
         await page.setUserAgent(
