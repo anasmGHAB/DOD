@@ -8,23 +8,30 @@ const puppeteer = require('puppeteer');
         console.log("Launching browser...");
         let browser;
 
-        if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
-            // Configuration Vercel / Production
-            console.log("Running in Production/Vercel environment");
-            browser = await puppeteerCore.launch({
-                args: chromium.args,
-                defaultViewport: chromium.defaultViewport,
-                executablePath: await chromium.executablePath(),
-                headless: chromium.headless,
-            });
-        } else {
-            // Configuration Local
-            console.log("Running in Local environment");
-            browser = await puppeteer.launch({
-                headless: true,
-                args: ["--no-sandbox", "--disable-setuid-sandbox"],
-            });
-        }
+        // Configuration Hybride (Cloud Run / Docker / Local)
+        console.log("Launching Puppeteer with hybrid config...");
+        browser = await puppeteer.launch({
+            // 1. Mode headless obligatoire pour le serveur
+            headless: "new",
+
+            // 2. Arguments critiques pour que Chrome fonctionne dans Docker/Cloud Run
+            args: [
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--no-first-run",
+                "--no-zygote",
+                "--single-process"
+            ],
+
+            // 3. LA SÉCURITÉ :
+            // Si on est en production (sur le Cloud), on met 'undefined' pour laisser Puppeteer trouver son Chrome Linux.
+            // Si on est en local (chez moi), on garde ton chemin actuel (ou undefined par défaut).
+            executablePath: process.env.NODE_ENV === 'production'
+                ? undefined
+                : (process.env.PUPPETEER_EXECUTABLE_PATH || undefined),
+        });
         console.log("Browser launched.");
 
         const page = await browser.newPage();
