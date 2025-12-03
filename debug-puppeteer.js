@@ -37,6 +37,15 @@ const puppeteer = require('puppeteer');
         const page = await browser.newPage();
         console.log("Page created.");
 
+        // 1. Définir un User-Agent de navigateur standard (Windows/Chrome)
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+        // 2. Définir des en-têtes de langue française (pour paraître plus naturel)
+        await page.setExtraHTTPHeaders({
+            'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        });
+
+        // 3. Définir une taille d'écran standard (viewport)
         await page.setViewport({ width: 1920, height: 1080 });
 
         console.log("Navigating to Nespresso...");
